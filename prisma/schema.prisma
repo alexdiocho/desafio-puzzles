@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,4 +5,97 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum ChallengeStatus {
+  draft
+  active
+  finished
+}
+
+enum ChallengeType {
+  single
+  double
+}
+
+model Phase {
+  id          String      @id @default(cuid())
+  name        String
+  order       Int
+  description String?
+  challenges  Challenge[]
+  created_at  DateTime    @default(now())
+
+  @@map("phases")
+}
+
+model Team {
+  id            String       @id @default(cuid())
+  name          String       @unique
+  secret_code   String
+  submissions   Submission[]
+  point_logs    PointLog[]
+  won_challenges Challenge[] @relation("WinnerTeam")
+
+  @@map("teams")
+}
+
+model Challenge {
+  id                  String          @id @default(cuid())
+  phase_id            String
+  phase               Phase           @relation(fields: [phase_id], references: [id], onDelete: Cascade)
+  title               String
+  description         String
+  media_urls          Json            @default("[]")
+  end_time            DateTime
+  status              ChallengeStatus @default(draft)
+  challenge_type      ChallengeType   @default(single)
+  parent_challenge_id String?
+  parent_challenge    Challenge?      @relation("ChallengeChain", fields: [parent_challenge_id], references: [id])
+  child_challenges    Challenge[]     @relation("ChallengeChain")
+  hint_text           String?
+  hint_available_at   DateTime?
+  winner_team_id      String?
+  winner_team         Team?           @relation("WinnerTeam", fields: [winner_team_id], references: [id])
+  submissions         Submission[]
+  point_logs          PointLog[]
+  created_at          DateTime        @default(now())
+
+  @@map("challenges")
+}
+
+model Submission {
+  id           String    @id @default(cuid())
+  team_id      String
+  team         Team      @relation(fields: [team_id], references: [id], onDelete: Cascade)
+  challenge_id String
+  challenge    Challenge @relation(fields: [challenge_id], references: [id], onDelete: Cascade)
+  answer       String
+  created_at   DateTime  @default(now())
+  is_valid     Boolean   @default(false)
+
+  @@index([challenge_id, created_at])
+  @@map("submissions")
+}
+
+model PointLog {
+  id           String     @id @default(cuid())
+  team_id      String
+  team         Team       @relation(fields: [team_id], references: [id], onDelete: Cascade)
+  challenge_id String?
+  challenge    Challenge? @relation(fields: [challenge_id], references: [id], onDelete: SetNull)
+  points       Int
+  reason       String
+  created_at   DateTime   @default(now())
+
+  @@map("point_logs")
+}
+
+model SiteConfig {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+
+  @@index([key])
+  @@map("site_config")
 }
