@@ -50,7 +50,13 @@ src/
 │   ├── page.tsx                    # Página principal (desafío activo)
 │   ├── ranking/                    # Ranking público
 │   ├── historial/                  # Historial por fases
-│   ├── admin-[ADMIN_SECRET]/       # Panel admin (URL secreta)
+│   ├── admin/[ADMIN_SECRET]/       # Panel admin (URL secreta)
+│   │   ├── layout.tsx              # Sidebar dorado, valida ADMIN_SECRET
+│   │   ├── page.tsx                # Dashboard
+│   │   ├── fases/                  # Gestión de fases
+│   │   ├── desafios/               # Gestión de desafíos (+ /[id]/respuestas)
+│   │   ├── equipos/                # Gestión de equipos
+│   │   └── config/                 # Toggle ranking
 │   └── api/                        # API routes
 ├── components/                     # Componentes reutilizables
 ├── lib/                            # Prisma client, utilidades
@@ -75,8 +81,8 @@ docs/
 ### Pendiente
 - [x] **Fase 2**: Schema Prisma con todas las tablas + migraciones + seed
 - [x] **Fase 3**: API routes (CRUD, anti-spam, validación código secreto, ranking, feature flags)
-- [ ] **Fase 4**: Frontend público (countdown, formulario, feed en vivo, ranking, historial)
-- [ ] **Fase 5**: Panel admin (gestión desafíos, ver respuestas, asignar puntos, toggle ranking)
+- [x] **Fase 4**: Frontend público (countdown, formulario, feed en vivo, ranking, historial)
+- [x] **Fase 5**: Panel admin (gestión desafíos, ver respuestas, asignar puntos, toggle ranking)
 - [ ] **Fase 6**: Testing (Vitest + Playwright)
 
 ## Notas técnicas

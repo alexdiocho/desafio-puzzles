@@ -3,6 +3,20 @@ import { prisma } from "@/lib/prisma"
 import { checkAdminAuth } from "@/lib/admin"
 import { toggleRankingSchema } from "@/lib/validations"
 
+export async function GET(request: Request) {
+  const authError = checkAdminAuth(request)
+  if (authError) return authError
+
+  try {
+    const config = await prisma.siteConfig.findUnique({
+      where: { key: "ranking_visible" },
+    })
+    return NextResponse.json({ visible: config?.value === "true" })
+  } catch {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
 export async function PUT(request: Request) {
   const authError = checkAdminAuth(request)
   if (authError) return authError
