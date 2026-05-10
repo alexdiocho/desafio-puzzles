@@ -74,7 +74,7 @@ docs/
 
 ### Pendiente
 - [x] **Fase 2**: Schema Prisma con todas las tablas + migraciones + seed
-- [ ] **Fase 3**: API routes (CRUD, anti-spam, validación código secreto, ranking, feature flags)
+- [x] **Fase 3**: API routes (CRUD, anti-spam, validación código secreto, ranking, feature flags)
 - [ ] **Fase 4**: Frontend público (countdown, formulario, feed en vivo, ranking, historial)
 - [ ] **Fase 5**: Panel admin (gestión desafíos, ver respuestas, asignar puntos, toggle ranking)
 - [ ] **Fase 6**: Testing (Vitest + Playwright)
