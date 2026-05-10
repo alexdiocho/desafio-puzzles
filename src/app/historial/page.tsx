@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 
-export const revalidate = 120
+export const dynamic = "force-dynamic"
 
 interface Submission {
   id: string

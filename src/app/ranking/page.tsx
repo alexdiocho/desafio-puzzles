@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import RankingTable from "@/components/RankingTable"
 
-export const revalidate = 60
+export const dynamic = "force-dynamic"
 
 async function getRankingData() {
   const config = await prisma.siteConfig.findUnique({ where: { key: "ranking_visible" } })

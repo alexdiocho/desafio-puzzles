@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import ChallengeCard, { type ChallengeData } from "@/components/ChallengeCard"
 
-export const revalidate = 30
+export const dynamic = "force-dynamic"
 
 async function getActiveChallenges(): Promise<ChallengeData[]> {
   const now = new Date()
