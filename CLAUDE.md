@@ -83,7 +83,7 @@ docs/
 - [x] **Fase 3**: API routes (CRUD, anti-spam, validación código secreto, ranking, feature flags)
 - [x] **Fase 4**: Frontend público (countdown, formulario, feed en vivo, ranking, historial)
 - [x] **Fase 5**: Panel admin (gestión desafíos, ver respuestas, asignar puntos, toggle ranking)
-- [ ] **Fase 6**: Testing (Vitest + Playwright)
+- [x] **Fase 6**: Testing (Vitest + Playwright)
 
 ## Notas técnicas
 
