@@ -1,98 +1,61 @@
 import { prisma } from "@/lib/prisma"
-import ChallengeCard, { type ChallengeData } from "@/components/ChallengeCard"
+import MysteryHeader from "@/components/MysteryHeader"
+import MysteryHome, {
+  type MysteryPhase,
+  type MysteryTeam,
+} from "@/components/MysteryHome"
 
 export const dynamic = "force-dynamic"
 
-async function getActiveChallenges(): Promise<ChallengeData[]> {
-  const now = new Date()
-  const challenges = await prisma.challenge.findMany({
-    where: { status: "active" },
-    include: { phase: { select: { id: true, name: true, order: true } } },
-    orderBy: { end_time: "asc" },
+async function getPhases(): Promise<MysteryPhase[]> {
+  const phases = await prisma.phase.findMany({
+    include: {
+      challenges: {
+        where: { status: { in: ["active", "finished"] } },
+        include: { winner_team: { select: { name: true } } },
+        orderBy: { created_at: "asc" },
+      },
+    },
+    orderBy: { order: "asc" },
   })
-  return challenges.map((c) => ({
-    id: c.id,
-    title: c.title,
-    description: c.description,
-    media_urls: c.media_urls,
-    end_time: c.end_time.toISOString(),
-    created_at: c.created_at.toISOString(),
-    challenge_type: c.challenge_type,
-    phase: c.phase,
-    hint_text: c.hint_available_at && c.hint_available_at <= now ? c.hint_text : null,
-    hint_available_at: c.hint_available_at?.toISOString() ?? null,
+
+  return phases.map((p) => ({
+    id: p.id,
+    order: p.order,
+    name: p.name,
+    subtitle: p.description,
+    locked: false,
+    challenges: p.challenges.map((c, i) => ({
+      id: c.id,
+      title: c.title,
+      description: c.description,
+      end_time: c.end_time.toISOString(),
+      status: c.status as "draft" | "active" | "finished",
+      challenge_type: c.challenge_type as "single" | "double",
+      number: i + 1,
+      phase_id: p.id,
+      phase_order: p.order,
+      phase_name: p.name,
+      winner_name: c.winner_team?.name ?? null,
+    })),
   }))
 }
 
-export default async function HomePage() {
-  const challenges = await getActiveChallenges()
-
-  return (
-    <main className="max-w-4xl mx-auto px-4 py-8">
-      {challenges.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <div
-          className={
-            challenges.length === 1
-              ? "max-w-2xl mx-auto"
-              : "grid gap-8 md:grid-cols-2"
-          }
-        >
-          {challenges.map((c) => (
-            <ChallengeCard key={c.id} challenge={c} />
-          ))}
-        </div>
-      )}
-    </main>
-  )
+async function getTeams(): Promise<MysteryTeam[]> {
+  const teams = await prisma.team.findMany({
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  })
+  return teams
 }
 
-function EmptyState() {
+export default async function HomePage() {
+  const [phases, teams] = await Promise.all([getPhases(), getTeams()])
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
-      {/* Glitch decoration */}
-      <div className="relative mb-8">
-        <p
-          className="font-mono font-bold text-6xl select-none"
-          style={{ color: "var(--border-active)", letterSpacing: "0.2em" }}
-        >
-          ???
-        </p>
-        <p
-          className="font-mono font-bold text-6xl absolute inset-0 animate-glitch"
-          style={{ color: "var(--accent-cyan)", letterSpacing: "0.2em", opacity: 0.3 }}
-          aria-hidden
-        >
-          ???
-        </p>
-      </div>
-
-      <h2
-        className="font-grotesk font-bold text-2xl mb-3"
-        style={{ color: "var(--text-primary)" }}
-      >
-        Ningún desafío activo
-      </h2>
-
-      <p
-        className="font-mono text-sm max-w-sm leading-relaxed"
-        style={{ color: "var(--text-secondary)" }}
-      >
-        El siguiente desafío está siendo preparado.
-        <br />
-        <span style={{ color: "var(--accent-cyan)" }}>Mantente alerta...</span>
-      </p>
-
-      <div
-        className="mt-8 px-6 py-2 rounded-full font-mono text-xs tracking-widest uppercase"
-        style={{
-          border: "1px solid var(--border-subtle)",
-          color: "var(--text-muted)",
-        }}
-      >
-        TRANSMISIÓN EN ESPERA
-      </div>
+    <div className="mystery-root">
+      <MysteryHeader current="desafio" />
+      <MysteryHome phases={phases} teams={teams} />
     </div>
   )
 }

@@ -1,122 +1,69 @@
 import { prisma } from "@/lib/prisma"
-import RankingTable from "@/components/RankingTable"
+import MysteryHeader from "@/components/MysteryHeader"
+import Locked from "@/components/Locked"
+import MysteryRanking, { type RankingTeam } from "@/components/MysteryRanking"
 
 export const dynamic = "force-dynamic"
 
-async function getRankingData() {
+async function getRanking(): Promise<{ visible: boolean; ranking: RankingTeam[] }> {
   const config = await prisma.siteConfig.findUnique({ where: { key: "ranking_visible" } })
   if (!config || config.value !== "true") {
-    return { visible: false }
+    return { visible: false, ranking: [] }
   }
 
   const teams = await prisma.team.findMany({
     include: {
       point_logs: {
-        include: { challenge: { select: { title: true } } },
+        include: { challenge: { select: { title: true, created_at: true } } },
         orderBy: { created_at: "desc" },
       },
+      won_challenges: { select: { id: true } },
     },
   })
 
-  const ranking = teams
-    .map((t) => ({
-      id: t.id,
-      name: t.name,
-      total_points: t.point_logs.reduce((s, l) => s + l.points, 0),
-      breakdown: t.point_logs.map((l) => ({
-        challenge_title: l.challenge?.title ?? null,
-        points: l.points,
-        reason: l.reason,
-      })),
-    }))
-    .sort((a, b) => b.total_points - a.total_points)
+  const ranked = teams
+    .map((t) => {
+      const points = t.point_logs.reduce((sum, log) => sum + log.points, 0)
+      const lastWinLog = t.point_logs.find((l) => l.points > 0 && l.challenge?.title)
+      return {
+        id: t.id,
+        name: t.name,
+        points,
+        solved: t.won_challenges.length,
+        lastWin: lastWinLog?.challenge?.title ?? null,
+      }
+    })
+    .sort((a, b) => b.points - a.points)
+    .map((t, i) => ({ ...t, rank: i + 1 }))
 
-  return { visible: true, ranking }
+  return { visible: true, ranking: ranked }
 }
 
 export default async function RankingPage() {
-  const data = await getRankingData()
+  const { visible, ranking } = await getRanking()
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-8">
-      <header className="mb-8 flex items-center gap-3">
-        <span className="text-3xl">🏆</span>
-        <h1
-          className="font-grotesk font-bold text-3xl"
-          style={{ color: "var(--text-primary)" }}
-        >
-          Ranking
-        </h1>
-      </header>
+    <div className="mystery-root">
+      <MysteryHeader current="ranking" />
+      <main className="page page--ranking">
+        {!visible ? (
+          <Locked kind="ranking" />
+        ) : (
+          <>
+            <div className="page__head">
+              <p className="page__overline">[ DOSSIER · ESTADO DE LA INVESTIGACIÓN ]</p>
+              <h1 className="page__title">Ranking</h1>
+              <p className="page__sub">Quien va primero, sabe algo que los demás aún no.</p>
+            </div>
 
-      {!data.visible ? (
-        <HiddenRanking />
-      ) : (
-        <RankingTable ranking={data.ranking ?? []} />
-      )}
-    </main>
-  )
-}
+            <MysteryRanking ranking={ranking} />
 
-function HiddenRanking() {
-  return (
-    <div
-      className="rounded-2xl px-6 py-10 text-center relative overflow-hidden"
-      style={{
-        background: "var(--bg-secondary)",
-        border: "1px solid var(--border-subtle)",
-      }}
-    >
-      {/* Glitch overlay */}
-      <div
-        className="absolute inset-0 animate-glitch pointer-events-none rounded-2xl"
-        style={{
-          background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,240,255,0.015) 2px, rgba(0,240,255,0.015) 4px)",
-          opacity: 0.5,
-        }}
-        aria-hidden
-      />
-
-      {/* Lock icon */}
-      <div className="relative mb-6">
-        <p
-          className="text-7xl select-none"
-          style={{ filter: "drop-shadow(0 0 16px var(--accent-cyan-dim))" }}
-        >
-          🔒
-        </p>
-      </div>
-
-      {/* Glitch text effect */}
-      <div className="relative inline-block mb-4">
-        <h2
-          className="font-grotesk font-bold text-2xl"
-          style={{ color: "var(--text-primary)" }}
-        >
-          CLASIFICADO
-        </h2>
-        <h2
-          className="font-grotesk font-bold text-2xl absolute inset-0 animate-glitch pointer-events-none"
-          style={{ color: "var(--accent-cyan)", opacity: 0.4 }}
-          aria-hidden
-        >
-          CLASIFICADO
-        </h2>
-      </div>
-
-      <p
-        className="font-mono text-sm max-w-xs mx-auto leading-relaxed"
-        style={{ color: "var(--text-secondary)" }}
-      >
-        El ranking está oculto... por ahora.
-      </p>
-
-      <p
-        className="font-mono text-xs mt-4"
-        style={{ color: "var(--text-muted)" }}
-      >
-        [ACCESO DENEGADO — NIVEL DE CLASIFICACIÓN INSUFICIENTE]
-      </p>
+            <footer className="page__foot">
+              <span>{"// snapshot continuo · resultados se actualizan tras cada respuesta validada"}</span>
+            </footer>
+          </>
+        )}
+      </main>
     </div>
   )
 }

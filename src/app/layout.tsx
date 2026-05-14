@@ -1,11 +1,10 @@
 import type { Metadata } from "next"
-import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google"
-import NavBar from "@/components/NavBar"
+import { Space_Grotesk, Inter, JetBrains_Mono, Fraunces } from "next/font/google"
 import "./globals.css"
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  weight: ["700"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-space-grotesk",
   display: "swap",
 })
@@ -19,8 +18,16 @@ const inter = Inter({
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: ["300", "400", "500", "600", "700"],
   variable: "--font-jetbrains-mono",
+  display: "swap",
+})
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  weight: ["300", "400", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-fraunces",
   display: "swap",
 })
 
@@ -35,12 +42,9 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} h-full`}
+      className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} ${fraunces.variable} h-full`}
     >
-      <body className="min-h-full flex flex-col antialiased">
-        <NavBar />
-        <div className="flex-1 relative z-10">{children}</div>
-      </body>
+      <body className="min-h-full antialiased">{children}</body>
     </html>
   )
 }
