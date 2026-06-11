@@ -286,6 +286,7 @@ export default function DesafiosPage() {
       {modalOpen && (
         <ChallengeModal
           editing={editing}
+          secret={secret}
           form={form}
           setForm={setForm}
           phases={phases}
@@ -295,6 +296,7 @@ export default function DesafiosPage() {
           saving={saving}
           onSubmit={handleSave}
           onClose={() => setModalOpen(false)}
+          onUploadError={(msg) => showToast(msg, false)}
         />
       )}
     </div>
@@ -400,6 +402,7 @@ function ChallengeRow({
 
 function ChallengeModal({
   editing,
+  secret,
   form,
   setForm,
   phases,
@@ -409,8 +412,10 @@ function ChallengeModal({
   saving,
   onSubmit,
   onClose,
+  onUploadError,
 }: {
   editing: Challenge | null
+  secret: string
   form: ChallengeForm
   setForm: React.Dispatch<React.SetStateAction<ChallengeForm>>
   phases: Phase[]
@@ -420,7 +425,10 @@ function ChallengeModal({
   saving: boolean
   onSubmit: (e: React.FormEvent) => void
   onClose: () => void
+  onUploadError: (msg: string) => void
 }) {
+  const [uploading, setUploading] = useState(false)
+
   function addMediaUrl() {
     setForm((f) => ({ ...f, media_urls: [...f.media_urls, ""] }))
   }
@@ -433,6 +441,32 @@ function ChallengeModal({
   }
   function removeMediaUrl(i: number) {
     setForm((f) => ({ ...f, media_urls: f.media_urls.filter((_, idx) => idx !== i) }))
+  }
+
+  async function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return
+    setUploading(true)
+    try {
+      for (const file of Array.from(files)) {
+        const fd = new FormData()
+        fd.append("file", file)
+        const res = await fetch("/api/admin/upload", {
+          method: "POST",
+          headers: { "x-admin-secret": secret },
+          body: fd,
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          onUploadError(data.error ?? "Error al subir la imagen")
+          continue
+        }
+        setForm((f) => ({ ...f, media_urls: [...f.media_urls, data.url] }))
+      }
+    } catch {
+      onUploadError("Error al subir la imagen")
+    } finally {
+      setUploading(false)
+    }
   }
 
   return (
@@ -575,25 +609,60 @@ function ChallengeModal({
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="font-mono text-xs" style={{ color: "var(--text-secondary)" }}>
-                Media URLs (imágenes / enlaces)
+                Media (imágenes / enlaces)
               </label>
-              <button
-                type="button"
-                onClick={addMediaUrl}
-                className="font-mono text-xs px-2 py-0.5 rounded"
-                style={{ color: "var(--accent-cyan)", border: "1px solid var(--border-subtle)" }}
-              >
-                + Añadir
-              </button>
+              <div className="flex items-center gap-2">
+                <label
+                  className="font-mono text-xs px-2 py-0.5 rounded cursor-pointer"
+                  style={{
+                    color: uploading ? "var(--text-muted)" : "var(--accent-gold)",
+                    border: "1px solid var(--border-subtle)",
+                    pointerEvents: uploading ? "none" : "auto",
+                  }}
+                >
+                  {uploading ? "Subiendo…" : "⭱ Subir imagen"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    disabled={uploading}
+                    onChange={(e) => {
+                      handleFiles(e.target.files)
+                      e.target.value = ""
+                    }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={addMediaUrl}
+                  className="font-mono text-xs px-2 py-0.5 rounded"
+                  style={{ color: "var(--accent-cyan)", border: "1px solid var(--border-subtle)" }}
+                >
+                  + URL
+                </button>
+              </div>
             </div>
             {form.media_urls.length === 0 ? (
               <p className="font-mono text-xs" style={{ color: "var(--text-muted)" }}>
-                Sin media. Haz clic en "+ Añadir" para agregar URLs.
+                Sin media. Sube una imagen o añade una URL.
               </p>
             ) : (
               <div className="space-y-2">
                 {form.media_urls.map((url, i) => (
-                  <div key={i} className="flex gap-2">
+                  <div key={i} className="flex gap-2 items-center">
+                    {url.trim() && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={url}
+                        alt=""
+                        className="w-10 h-10 rounded object-cover flex-shrink-0"
+                        style={{ border: "1px solid var(--border-subtle)" }}
+                        onError={(e) => {
+                          ;(e.currentTarget as HTMLImageElement).style.display = "none"
+                        }}
+                      />
+                    )}
                     <input
                       className="input-base flex-1 font-mono text-sm"
                       value={url}
