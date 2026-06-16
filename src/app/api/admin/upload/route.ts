@@ -44,7 +44,12 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json({ url: blob.url }, { status: 201 })
-  } catch {
-    return NextResponse.json({ error: "Error al subir la imagen" }, { status: 500 })
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err)
+    console.error("[upload] fallo al subir a Vercel Blob:", detail)
+    return NextResponse.json(
+      { error: `Error al subir la imagen: ${detail}` },
+      { status: 500 }
+    )
   }
 }
