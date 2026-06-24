@@ -23,6 +23,7 @@ export interface ChallengeData {
   challenge_type: string
   phase: Phase
   hint_text: string | null
+  hint_image_url: string | null
   hint_available_at: string | null
 }
 
@@ -35,7 +36,7 @@ export default function ChallengeCard({ challenge }: ChallengeCardProps) {
   const mediaUrls: string[] = Array.isArray(challenge.media_urls)
     ? (challenge.media_urls as string[])
     : []
-  const hasHint = !!challenge.hint_text
+  const hasHint = !!challenge.hint_text || !!challenge.hint_image_url
 
   return (
     <article
@@ -132,12 +133,27 @@ export default function ChallengeCard({ challenge }: ChallengeCardProps) {
                 border: "1px solid rgba(0,255,136,0.25)",
               }}
             >
-              <p
-                className="font-mono text-sm leading-relaxed"
-                style={{ color: "var(--accent-green)" }}
-              >
-                {challenge.hint_text}
-              </p>
+              {challenge.hint_text && (
+                <p
+                  className="font-mono text-sm leading-relaxed"
+                  style={{ color: "var(--accent-green)" }}
+                >
+                  {challenge.hint_text}
+                </p>
+              )}
+              {challenge.hint_image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={challenge.hint_image_url}
+                  alt="Pista"
+                  className="w-full rounded-lg mt-3"
+                  style={{
+                    border: "1px solid rgba(0,255,136,0.25)",
+                    maxHeight: "400px",
+                    objectFit: "contain",
+                  }}
+                />
+              )}
             </div>
           )}
         </div>

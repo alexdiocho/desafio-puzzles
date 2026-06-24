@@ -8,6 +8,7 @@ import MysteryHome, {
 export const dynamic = "force-dynamic"
 
 async function getPhases(): Promise<MysteryPhase[]> {
+  const now = new Date()
   const phases = await prisma.phase.findMany({
     include: {
       challenges: {
@@ -25,19 +26,25 @@ async function getPhases(): Promise<MysteryPhase[]> {
     name: p.name,
     subtitle: p.description,
     locked: false,
-    challenges: p.challenges.map((c, i) => ({
-      id: c.id,
-      title: c.title,
-      description: c.description,
-      end_time: c.end_time.toISOString(),
-      status: c.status as "draft" | "active" | "finished",
-      challenge_type: c.challenge_type as "single" | "double",
-      number: i + 1,
-      phase_id: p.id,
-      phase_order: p.order,
-      phase_name: p.name,
-      winner_name: c.winner_team?.name ?? null,
-    })),
+    challenges: p.challenges.map((c, i) => {
+      const hintUnlocked =
+        c.hint_enabled || (!!c.hint_available_at && c.hint_available_at <= now)
+      return {
+        id: c.id,
+        title: c.title,
+        description: c.description,
+        end_time: c.end_time.toISOString(),
+        status: c.status as "draft" | "active" | "finished",
+        challenge_type: c.challenge_type as "single" | "double",
+        number: i + 1,
+        phase_id: p.id,
+        phase_order: p.order,
+        phase_name: p.name,
+        winner_name: c.winner_team?.name ?? null,
+        hint_text: hintUnlocked ? c.hint_text : null,
+        hint_image_url: hintUnlocked ? c.hint_image_url : null,
+      }
+    }),
   }))
 }
 

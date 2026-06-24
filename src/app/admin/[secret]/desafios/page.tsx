@@ -23,6 +23,8 @@ interface Challenge {
   challenge_type: "single" | "double"
   parent_challenge_id: string | null
   hint_text: string | null
+  hint_image_url: string | null
+  hint_enabled: boolean
   hint_available_at: string | null
   phase: { name: string; order: number }
   winner_team: { id: string; name: string } | null
@@ -38,6 +40,8 @@ type ChallengeForm = {
   parent_challenge_id: string
   end_time: string
   hint_text: string
+  hint_image_url: string
+  hint_enabled: boolean
   hint_available_at: string
 }
 
@@ -76,6 +80,8 @@ const EMPTY_FORM: ChallengeForm = {
   parent_challenge_id: "",
   end_time: "",
   hint_text: "",
+  hint_image_url: "",
+  hint_enabled: false,
   hint_available_at: "",
 }
 
@@ -136,6 +142,8 @@ export default function DesafiosPage() {
       parent_challenge_id: c.parent_challenge_id ?? "",
       end_time: toDatetimeLocal(c.end_time),
       hint_text: c.hint_text ?? "",
+      hint_image_url: c.hint_image_url ?? "",
+      hint_enabled: c.hint_enabled ?? false,
       hint_available_at: c.hint_available_at ? toDatetimeLocal(c.hint_available_at) : "",
     })
     setPreview(false)
@@ -154,6 +162,8 @@ export default function DesafiosPage() {
       parent_challenge_id: form.parent_challenge_id || null,
       end_time: new Date(form.end_time).toISOString(),
       hint_text: form.hint_text || null,
+      hint_image_url: form.hint_image_url || null,
+      hint_enabled: form.hint_enabled,
       hint_available_at: form.hint_available_at
         ? new Date(form.hint_available_at).toISOString()
         : null,
@@ -203,6 +213,21 @@ export default function DesafiosPage() {
       await loadAll()
     } catch {
       showToast("Error al cambiar estado", false)
+    }
+  }
+
+  async function toggleHint(id: string, enabled: boolean) {
+    try {
+      const res = await fetch("/api/admin/challenges", {
+        method: "PUT",
+        headers: hJson,
+        body: JSON.stringify({ id, hint_enabled: enabled }),
+      })
+      if (!res.ok) throw new Error()
+      showToast(enabled ? "Pista habilitada para los equipos" : "Pista oculta")
+      await loadAll()
+    } catch {
+      showToast("Error al cambiar la pista", false)
     }
   }
 
@@ -278,6 +303,7 @@ export default function DesafiosPage() {
               base={base}
               onEdit={() => openEdit(c)}
               onStatusChange={changeStatus}
+              onHintToggle={toggleHint}
             />
           ))}
         </div>
@@ -310,12 +336,15 @@ function ChallengeRow({
   base,
   onEdit,
   onStatusChange,
+  onHintToggle,
 }: {
   challenge: Challenge
   base: string
   onEdit: () => void
   onStatusChange: (id: string, status: string) => void
+  onHintToggle: (id: string, enabled: boolean) => void
 }) {
+  const hasHint = !!c.hint_text || !!c.hint_image_url
   return (
     <div
       className="rounded-xl p-4"
@@ -367,6 +396,20 @@ function ChallengeRow({
           >
             Respuestas
           </Link>
+          {hasHint && (
+            <button
+              onClick={() => onHintToggle(c.id, !c.hint_enabled)}
+              title={c.hint_enabled ? "Pista visible — click para ocultar" : "Pista oculta — click para habilitar"}
+              className="font-mono text-xs px-2.5 py-1 rounded-lg transition-opacity hover:opacity-80"
+              style={
+                c.hint_enabled
+                  ? { background: "rgba(0,255,136,0.12)", color: "var(--accent-green)", border: "1px solid rgba(0,255,136,0.25)" }
+                  : { border: "1px solid var(--border-subtle)", color: "var(--text-muted)" }
+              }
+            >
+              {c.hint_enabled ? "💡 Pista ON" : "💡 Pista OFF"}
+            </button>
+          )}
           <button
             onClick={onEdit}
             className="font-mono text-xs px-2.5 py-1 rounded-lg transition-opacity hover:opacity-80"
@@ -428,6 +471,32 @@ function ChallengeModal({
   onUploadError: (msg: string) => void
 }) {
   const [uploading, setUploading] = useState(false)
+  const [uploadingHint, setUploadingHint] = useState(false)
+
+  async function handleHintImage(files: FileList | null) {
+    const file = files?.[0]
+    if (!file) return
+    setUploadingHint(true)
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        headers: { "x-admin-secret": secret },
+        body: fd,
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        onUploadError(data.error ?? "Error al subir la imagen")
+        return
+      }
+      setForm((f) => ({ ...f, hint_image_url: data.url }))
+    } catch {
+      onUploadError("Error al subir la imagen")
+    } finally {
+      setUploadingHint(false)
+    }
+  }
 
   function addMediaUrl() {
     setForm((f) => ({ ...f, media_urls: [...f.media_urls, ""] }))
@@ -688,8 +757,37 @@ function ChallengeModal({
             className="rounded-xl p-4 space-y-3"
             style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}
           >
-            <p className="font-mono text-xs font-bold uppercase tracking-wider" style={{ color: "var(--accent-green)" }}>
-              💡 Pista (opcional)
+            <div className="flex items-center justify-between gap-4">
+              <p className="font-mono text-xs font-bold uppercase tracking-wider" style={{ color: "var(--accent-green)" }}>
+                💡 Pista (opcional)
+              </p>
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <span className="font-mono text-xs" style={{ color: form.hint_enabled ? "var(--accent-green)" : "var(--text-muted)" }}>
+                  {form.hint_enabled ? "Visible" : "Oculta"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, hint_enabled: !f.hint_enabled }))}
+                  className="relative w-11 h-6 rounded-full transition-all duration-300 flex-shrink-0"
+                  style={{
+                    background: form.hint_enabled ? "var(--accent-green)" : "var(--bg-elevated)",
+                    border: `2px solid ${form.hint_enabled ? "var(--accent-green)" : "var(--border-active)"}`,
+                  }}
+                  aria-label="Habilitar pista para los equipos"
+                  aria-pressed={form.hint_enabled}
+                >
+                  <span
+                    className="absolute top-0.5 w-4 h-4 rounded-full transition-all duration-300"
+                    style={{
+                      background: form.hint_enabled ? "#000" : "var(--text-muted)",
+                      left: form.hint_enabled ? "calc(100% - 1.25rem)" : "0.125rem",
+                    }}
+                  />
+                </button>
+              </label>
+            </div>
+            <p className="font-mono text-xs" style={{ color: "var(--text-muted)" }}>
+              Con el interruptor en <b>Visible</b> los equipos ven la pista al instante. La fecha de desbloqueo (abajo) la revela automáticamente a esa hora aunque el interruptor esté en Oculta.
             </p>
             <Field label="Texto de la pista">
               <textarea
@@ -700,6 +798,75 @@ function ChallengeModal({
                 placeholder="Mira hacia donde cae el sol..."
               />
             </Field>
+
+            {/* Hint image */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="font-mono text-xs" style={{ color: "var(--text-secondary)" }}>
+                  Imagen de la pista (opcional)
+                </label>
+                <div className="flex items-center gap-2">
+                  <label
+                    className="font-mono text-xs px-2 py-0.5 rounded cursor-pointer"
+                    style={{
+                      color: uploadingHint ? "var(--text-muted)" : "var(--accent-gold)",
+                      border: "1px solid var(--border-subtle)",
+                      pointerEvents: uploadingHint ? "none" : "auto",
+                    }}
+                  >
+                    {uploadingHint ? "Subiendo…" : "⭱ Subir imagen"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploadingHint}
+                      onChange={(e) => {
+                        handleHintImage(e.target.files)
+                        e.target.value = ""
+                      }}
+                    />
+                  </label>
+                  {form.hint_image_url && (
+                    <button
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, hint_image_url: "" }))}
+                      className="font-mono text-xs px-2 py-0.5 rounded"
+                      style={{ color: "var(--accent-red)", border: "1px solid var(--border-subtle)" }}
+                    >
+                      Quitar
+                    </button>
+                  )}
+                </div>
+              </div>
+              {form.hint_image_url ? (
+                <div className="flex gap-2 items-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={form.hint_image_url}
+                    alt=""
+                    className="w-10 h-10 rounded object-cover flex-shrink-0"
+                    style={{ border: "1px solid var(--border-subtle)" }}
+                    onError={(e) => {
+                      ;(e.currentTarget as HTMLImageElement).style.display = "none"
+                    }}
+                  />
+                  <input
+                    className="input-base flex-1 font-mono text-sm"
+                    value={form.hint_image_url}
+                    onChange={(e) => setForm((f) => ({ ...f, hint_image_url: e.target.value }))}
+                    placeholder="https://..."
+                  />
+                </div>
+              ) : (
+                <input
+                  className="input-base font-mono text-sm"
+                  value={form.hint_image_url}
+                  onChange={(e) => setForm((f) => ({ ...f, hint_image_url: e.target.value }))}
+                  placeholder="Sube una imagen o pega una URL…"
+                />
+              )}
+            </div>
+
             <Field label="Fecha y hora de desbloqueo">
               <input
                 className="input-base"

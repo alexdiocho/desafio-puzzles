@@ -54,6 +54,8 @@ model Challenge {
   parent_challenge    Challenge?      @relation("ChallengeChain", fields: [parent_challenge_id], references: [id])
   child_challenges    Challenge[]     @relation("ChallengeChain")
   hint_text           String?
+  hint_image_url      String?
+  hint_enabled        Boolean         @default(false)
   hint_available_at   DateTime?
   winner_team_id      String?
   winner_team         Team?           @relation("WinnerTeam", fields: [winner_team_id], references: [id])

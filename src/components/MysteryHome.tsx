@@ -14,6 +14,8 @@ export interface MysteryChallenge {
   phase_order: number
   phase_name: string
   winner_name: string | null
+  hint_text: string | null
+  hint_image_url: string | null
 }
 
 export interface MysteryPhase {
@@ -227,6 +229,10 @@ function Poster({ challenge, teams }: { challenge: MysteryChallenge; teams: Myst
         ) : (
           <>
             <PosterTimer endTime={challenge.end_time} />
+            <PosterHint
+              text={challenge.hint_text}
+              imageUrl={challenge.hint_image_url}
+            />
             <PosterForm challengeId={challenge.id} teams={teams} />
             <PosterActivity key={challenge.id} challengeId={challenge.id} />
           </>
@@ -279,6 +285,44 @@ function PosterTimer({ endTime }: { endTime: string }) {
         <span className="poster-timer__colon">:</span>
         <span className="poster-timer__seg"><b>{s}</b><i>SEG</i></span>
       </div>
+    </div>
+  )
+}
+
+/* ============================ HINT ============================ */
+
+function PosterHint({
+  text,
+  imageUrl,
+}: {
+  text: string | null
+  imageUrl: string | null
+}) {
+  const [open, setOpen] = useState(false)
+  const hasText = !!text && text.trim().length > 0
+  const hasImage = !!imageUrl && imageUrl.trim().length > 0
+  if (!hasText && !hasImage) return null
+
+  return (
+    <div className="poster-hint">
+      <button
+        type="button"
+        className={`poster-hint__toggle ${open ? "is-open" : ""}`}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span className="poster-hint__icon" aria-hidden>🔍</span>
+        <span>{open ? "OCULTAR PISTA" : "PISTA DESBLOQUEADA"}</span>
+        <span className="poster-hint__chevron" aria-hidden>{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div className="poster-hint__body">
+          {hasText && <p className="poster-hint__text">{text}</p>}
+          {hasImage && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className="poster-hint__img" src={imageUrl!} alt="Pista" />
+          )}
+        </div>
+      )}
     </div>
   )
 }

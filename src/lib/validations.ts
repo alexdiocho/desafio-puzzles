@@ -23,6 +23,8 @@ export const createChallengeSchema = z.object({
   challenge_type: z.enum(["single", "double"]).optional(),
   parent_challenge_id: z.string().nullable().optional(),
   hint_text: z.string().nullable().optional(),
+  hint_image_url: z.string().nullable().optional(),
+  hint_enabled: z.boolean().optional(),
   hint_available_at: z.string().nullable().optional(),
 })
 
@@ -37,6 +39,8 @@ export const updateChallengeSchema = z.object({
   challenge_type: z.enum(["single", "double"]).optional(),
   parent_challenge_id: z.string().nullable().optional(),
   hint_text: z.string().nullable().optional(),
+  hint_image_url: z.string().nullable().optional(),
+  hint_enabled: z.boolean().optional(),
   hint_available_at: z.string().nullable().optional(),
 })
 
