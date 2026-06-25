@@ -321,11 +321,10 @@ export default function RespuestasPage() {
                           {sub.team_name}
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 max-w-xs">
+                      <td className="px-3 py-2.5" style={{ maxWidth: "360px", minWidth: "180px" }}>
                         <p
-                          className="font-mono text-xs truncate"
+                          className="font-mono text-xs whitespace-pre-wrap break-words"
                           style={{ color: "var(--text-secondary)" }}
-                          title={sub.answer}
                         >
                           {sub.answer}
                         </p>
