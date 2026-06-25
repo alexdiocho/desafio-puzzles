@@ -601,6 +601,7 @@ body::before {
 @keyframes mystery-fade-in { from { opacity: 0; transform: translateY(-4px);} to { opacity: 1; transform: none; } }
 
 .poster {
+  --poster-col: 620px;
   position: relative;
   padding: 56px 52px 48px;
   background:
@@ -643,14 +644,15 @@ body::before {
 }
 
 .poster__numwrap {
-  position: absolute; right: 0; top: -10px;
+  position: absolute; right: 0; top: -6px;
   display: flex; flex-direction: column; align-items: flex-end;
-  line-height: .9; opacity: .9; pointer-events: none;
+  line-height: .9; opacity: .4; pointer-events: none;
+  z-index: 0;
 }
 .poster__num {
   font-family: var(--serif);
   font-weight: 300;
-  font-size: clamp(120px, 18vw, 220px);
+  font-size: clamp(88px, 12vw, 160px);
   letter-spacing: -0.04em;
   color: transparent;
   -webkit-text-stroke: 1px var(--border-active);
@@ -668,7 +670,7 @@ body::before {
   letter-spacing: -0.025em;
   color: var(--text-primary);
   text-wrap: balance;
-  max-width: 18ch;
+  max-width: var(--poster-col);
   position: relative;
 }
 .poster__title::after {
@@ -681,14 +683,35 @@ body::before {
 }
 
 .poster__desc {
-  margin: 0 0 36px;
+  margin: 0 0 32px;
+  padding: 16px 20px;
+  border-left: 3px solid var(--accent-active);
+  background: var(--accent-active-dim);
+  border-radius: 0 8px 8px 0;
   font-family: var(--serif);
   font-style: italic;
-  font-size: 18px;
-  line-height: 1.5;
-  color: var(--text-secondary);
-  max-width: 52ch;
+  font-size: clamp(20px, 2.4vw, 26px);
+  line-height: 1.55;
+  color: var(--text-primary);
+  max-width: var(--poster-col);
   text-wrap: pretty;
+}
+
+/* Imágenes del enunciado */
+.poster__media {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0 0 32px;
+  max-width: var(--poster-col);
+}
+.poster__media-img {
+  width: 100%;
+  max-height: 460px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle, rgba(255,255,255,.12));
+  background: rgba(10,10,15,.4);
 }
 
 /* Timer */
@@ -696,8 +719,9 @@ body::before {
   background: rgba(10,10,15,.55);
   border: 1px solid var(--accent-active);
   border-radius: 6px;
-  padding: 22px 24px 20px;
+  padding: 16px 18px 14px;
   margin: 0 0 32px;
+  max-width: var(--poster-col);
   box-shadow: inset 0 0 30px var(--accent-active-dim), 0 0 22px -10px var(--accent-active);
   position: relative;
 }
@@ -709,13 +733,13 @@ body::before {
 }
 .poster-timer__digits {
   display: flex; align-items: baseline; justify-content: center;
-  gap: 18px;
+  gap: 12px;
   font-family: var(--mono);
 }
 .poster-timer__seg { display: inline-flex; flex-direction: column; align-items: center; }
 .poster-timer__seg b {
   font-weight: 700;
-  font-size: clamp(48px, 7vw, 88px);
+  font-size: clamp(34px, 5vw, 60px);
   line-height: 1;
   color: var(--accent-active);
   text-shadow: 0 0 18px var(--accent-active-dim), 0 0 32px var(--accent-active-dim);
@@ -726,7 +750,7 @@ body::before {
   color: var(--text-muted); margin-top: 6px;
 }
 .poster-timer__colon {
-  font-size: clamp(40px, 6vw, 72px);
+  font-size: clamp(28px, 4vw, 48px);
   color: var(--accent-active); opacity: .55;
   font-weight: 700;
 }
@@ -734,7 +758,7 @@ body::before {
 @keyframes mystery-blink { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
 
 /* Hint */
-.poster-hint { margin: 0 0 28px; }
+.poster-hint { margin: 0 0 28px; max-width: var(--poster-col); }
 .poster-hint__toggle {
   display: inline-flex; align-items: center; gap: 9px;
   background: rgba(0,255,136,.05);
@@ -769,7 +793,7 @@ body::before {
 }
 
 /* Form */
-.poster-form { display: grid; gap: 14px; max-width: 540px; }
+.poster-form { display: grid; gap: 14px; max-width: var(--poster-col); }
 .poster-form__lbl {
   display: block; margin-bottom: 4px;
   font-family: var(--mono); font-size: 11px; letter-spacing: .25em;
@@ -826,6 +850,7 @@ body::before {
   margin-top: 36px;
   padding-top: 22px;
   border-top: 1px dashed var(--border-subtle);
+  max-width: var(--poster-col);
 }
 .poster-activity__lbl {
   display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .25em;
@@ -848,6 +873,7 @@ body::before {
   background: rgba(255,215,0,.04);
   box-shadow: inset 0 0 30px rgba(255,215,0,.06);
   margin-top: 8px;
+  max-width: var(--poster-col);
 }
 .poster-finished__lbl {
   font-family: var(--mono); font-size: 11px; letter-spacing: .25em;

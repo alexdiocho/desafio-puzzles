@@ -33,6 +33,17 @@ async function getPhases(): Promise<MysteryPhase[]> {
         id: c.id,
         title: c.title,
         description: c.description,
+        media_urls: Array.isArray(c.media_urls)
+          ? (c.media_urls as unknown[])
+              .map((m) =>
+                typeof m === "string"
+                  ? m
+                  : m && typeof m === "object" && "url" in m
+                    ? String((m as { url: unknown }).url)
+                    : ""
+              )
+              .filter((u) => u.trim().length > 0)
+          : [],
         end_time: c.end_time.toISOString(),
         status: c.status as "draft" | "active" | "finished",
         challenge_type: c.challenge_type as "single" | "double",

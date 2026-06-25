@@ -6,6 +6,7 @@ export interface MysteryChallenge {
   id: string
   title: string
   description: string
+  media_urls: string[]
   end_time: string
   status: "draft" | "active" | "finished"
   challenge_type: "single" | "double"
@@ -223,6 +224,15 @@ function Poster({ challenge, teams }: { challenge: MysteryChallenge; teams: Myst
 
         <h1 className="poster__title">{challenge.title}</h1>
         <p className="poster__desc">{challenge.description}</p>
+
+        {challenge.media_urls.length > 0 && (
+          <div className="poster__media">
+            {challenge.media_urls.map((url, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={i} className="poster__media-img" src={url} alt={`Imagen ${i + 1} del enunciado`} />
+            ))}
+          </div>
+        )}
 
         {isFinished ? (
           <FinishedPoster challenge={challenge} />
