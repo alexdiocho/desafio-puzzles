@@ -69,7 +69,7 @@ beforeEach(() => {
   })
 })
 
-describe('POST /api/submissions — Anti-spam', () => {
+describe('POST /api/submissions — Una sola respuesta por equipo', () => {
   it('permite el primer envío de un equipo', async () => {
     const res = await POST(makeRequest(VALID_BODY))
     expect(res.status).toBe(201)
@@ -77,27 +77,19 @@ describe('POST /api/submissions — Anti-spam', () => {
     expect(data.success).toBe(true)
   })
 
-  it('rechaza envío del mismo equipo al mismo desafío antes de 2 minutos', async () => {
+  it('rechaza un segundo envío del mismo equipo al mismo desafío', async () => {
     mockPrisma.submission.findFirst.mockResolvedValue(EXISTING_SUBMISSION)
 
     const res = await POST(makeRequest(VALID_BODY))
     expect(res.status).toBe(429)
     const data = await res.json()
-    expect(data.error).toMatch(/2 minutos/)
+    expect(data.error).toMatch(/ya ha enviado/)
   })
 
-  it('permite envío del mismo equipo al mismo desafío después de 2 minutos', async () => {
-    // findFirst returns null = cooldown expiró, no hay envío reciente
-    mockPrisma.submission.findFirst.mockResolvedValue(null)
-
-    const res = await POST(makeRequest(VALID_BODY))
-    expect(res.status).toBe(201)
-  })
-
-  it('permite envío de otro equipo al mismo desafío inmediatamente', async () => {
+  it('permite envío de otro equipo al mismo desafío', async () => {
     const otherTeam = { id: 'team-2', name: 'Equipo Delta', secret_code: 'DELTA-9X' }
     mockPrisma.team.findUnique.mockResolvedValue(otherTeam)
-    // team-2 no tiene envío reciente
+    // team-2 no tiene envío previo
     mockPrisma.submission.findFirst.mockResolvedValue(null)
 
     const res = await POST(makeRequest({
@@ -108,7 +100,7 @@ describe('POST /api/submissions — Anti-spam', () => {
     }))
 
     expect(res.status).toBe(201)
-    // El filtro anti-spam debe usar team_id, no ser global
+    // La verificación debe usar team_id, no ser global
     expect(mockPrisma.submission.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ team_id: 'team-2', challenge_id: 'challenge-1' }),

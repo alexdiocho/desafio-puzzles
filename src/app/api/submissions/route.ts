@@ -49,17 +49,12 @@ export async function POST(request: Request) {
       )
     }
 
-    const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000)
-    const recentSubmission = await prisma.submission.findFirst({
-      where: {
-        team_id,
-        challenge_id,
-        created_at: { gte: twoMinutesAgo },
-      },
+    const existingSubmission = await prisma.submission.findFirst({
+      where: { team_id, challenge_id },
     })
-    if (recentSubmission) {
+    if (existingSubmission) {
       return NextResponse.json(
-        { error: "Debes esperar 2 minutos entre envíos para el mismo desafío" },
+        { error: "Tu equipo ya ha enviado una respuesta para este desafío" },
         { status: 429 }
       )
     }
