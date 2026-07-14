@@ -153,6 +153,18 @@ export default function RespuestasPage() {
     }
   }
 
+  async function deletePointLog(logId: string) {
+    if (!confirm("¿Eliminar este registro de puntos?")) return
+    try {
+      const res = await fetch(`/api/admin/points/${logId}`, { method: "DELETE", headers: h })
+      if (!res.ok) throw new Error()
+      showToast("Registro eliminado")
+      await loadAll()
+    } catch {
+      showToast("Error al eliminar", false)
+    }
+  }
+
   async function savePoints(e: React.FormEvent) {
     e.preventDefault()
     if (!ptTeamId) return
@@ -499,9 +511,19 @@ export default function RespuestasPage() {
                     · {p.reason}
                   </span>
                 </div>
-                <span className="font-mono text-xs flex-shrink-0 ml-2" style={{ color: "var(--text-muted)" }}>
-                  {format(new Date(p.created_at), "dd/MM HH:mm")}
-                </span>
+                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                  <span className="font-mono text-xs" style={{ color: "var(--text-muted)" }}>
+                    {format(new Date(p.created_at), "dd/MM HH:mm")}
+                  </span>
+                  <button
+                    onClick={() => deletePointLog(p.id)}
+                    className="font-mono text-xs px-1.5 py-0.5 rounded transition-opacity hover:opacity-80"
+                    style={{ background: "rgba(255,59,59,0.15)", color: "var(--accent-red)", border: "1px solid rgba(255,59,59,0.3)" }}
+                    title="Eliminar registro"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
             ))}
           </div>
